@@ -41,3 +41,15 @@ require_root() {
   fi
   return 0
 }
+
+# install_pkg <pkg> [<pkg> ...]
+# Installs one or more system packages using the distro's package manager.
+# Currently supports apt-based distros (Ubuntu, Debian).
+install_pkg() {
+  if [[ $# -eq 0 ]]; then
+    echo "install_pkg: no packages given" >&2
+    return 1
+  fi
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"
+}

@@ -80,3 +80,20 @@ EOF
   assert_failure
   assert_output --partial "must be run as root"
 }
+
+@test "install_pkg: invokes apt-get install -y with the given packages" {
+  # Mock apt-get by putting a fake on PATH.
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/apt-get" <<EOF
+#!/usr/bin/env bash
+echo "apt-get called with: \$*" >> "${TEST_TMP}/apt-get.log"
+EOF
+  chmod +x "${TEST_TMP}/bin/apt-get"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+
+  run install_pkg curl jq
+  assert_success
+  run cat "${TEST_TMP}/apt-get.log"
+  assert_output --partial "update"
+  assert_output --partial "install -y curl jq"
+}
