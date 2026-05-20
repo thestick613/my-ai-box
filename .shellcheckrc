@@ -1,0 +1,8 @@
+# Enable optional, strict checks not on by default.
+enable=all
+
+# Tests run with bats; bats macros redefine `run`, `load`, `setup`. Allow them.
+external-sources=true
+
+# Style severity (-S style in CI; locally see all).
+severity=style
