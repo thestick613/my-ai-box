@@ -12,7 +12,7 @@ bats_load_library bats-support
 bats_load_library bats-assert
 
 # Path to the repo root, computed from this file's location.
-REPO_ROOT="$(cd "$(dirname "${BATS_TEST_FILENAME}")/../.." && pwd)"
+REPO_ROOT="$(cd "${_HELPER_DIR}/../.." && pwd)"
 export REPO_ROOT
 
 # Convenience: source a library file under lib/ for tests.
