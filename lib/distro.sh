@@ -53,3 +53,15 @@ install_pkg() {
   apt-get update -qq
   DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"
 }
+
+# install_docker
+# Installs Docker Engine via get.docker.com if `docker` is not on PATH.
+# Idempotent: prints a message and returns 0 if Docker is already installed.
+install_docker() {
+  if command -v docker >/dev/null 2>&1; then
+    echo "docker already installed: $(command -v docker)"
+    return 0
+  fi
+  echo "installing Docker via get.docker.com…"
+  curl -fsSL https://get.docker.com | sh
+}

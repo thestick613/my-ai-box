@@ -97,3 +97,41 @@ EOF
   assert_output --partial "update"
   assert_output --partial "install -y curl jq"
 }
+
+@test "install_docker: is a no-op when docker is already on PATH" {
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/docker" <<EOF
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "${TEST_TMP}/bin/docker"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+
+  run install_docker
+  assert_success
+  assert_output --partial "docker already installed"
+}
+
+@test "install_docker: downloads and runs get.docker.com when docker is missing" {
+  # Force docker missing by overriding PATH to exclude any real docker.
+  export PATH="${TEST_TMP}/bin:/usr/bin:/bin"
+  # Mock curl + sh so we record the URL it was asked to fetch.
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/curl" <<EOF
+#!/usr/bin/env bash
+echo "curl called: \$*" >> "${TEST_TMP}/curl.log"
+echo "echo 'fake install script'"
+EOF
+  chmod +x "${TEST_TMP}/bin/curl"
+  cat > "${TEST_TMP}/bin/sh" <<EOF
+#!/usr/bin/env bash
+echo "sh called" >> "${TEST_TMP}/sh.log"
+exit 0
+EOF
+  chmod +x "${TEST_TMP}/bin/sh"
+
+  run install_docker
+  assert_success
+  run cat "${TEST_TMP}/curl.log"
+  assert_output --partial "get.docker.com"
+}
