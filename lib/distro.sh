@@ -30,3 +30,14 @@ detect_distro() {
       ;;
   esac
 }
+
+# require_root
+# Exits non-zero with a helpful message if the current process isn't root.
+# Uses `id -u` so the check is mockable in tests via PATH injection.
+require_root() {
+  if [[ "$(id -u)" -ne 0 ]]; then
+    echo "must be run as root (try: sudo $0 \"\$@\")" >&2
+    return 1
+  fi
+  return 0
+}

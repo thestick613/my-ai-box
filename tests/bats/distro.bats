@@ -55,3 +55,28 @@ EOF
   assert_failure
   assert_output --partial "cannot detect distro"
 }
+
+@test "require_root: succeeds when id -u returns 0" {
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/id" <<EOF
+#!/usr/bin/env bash
+echo "0"
+EOF
+  chmod +x "${TEST_TMP}/bin/id"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+  run require_root
+  assert_success
+}
+
+@test "require_root: fails with a helpful message when id -u returns non-zero" {
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/id" <<EOF
+#!/usr/bin/env bash
+echo "1000"
+EOF
+  chmod +x "${TEST_TMP}/bin/id"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+  run require_root
+  assert_failure
+  assert_output --partial "must be run as root"
+}
