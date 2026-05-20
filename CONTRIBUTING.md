@@ -7,7 +7,7 @@ Thanks for your interest. This project follows a simple workflow.
 1. Fork the repo.
 2. Clone your fork and create a branch off `main`.
 3. Make changes following the conventions below.
-4. Ensure `shellcheck` passes locally: `shellcheck $(find . -name '*.sh' -not -path './tests/bats/lib/*')`
+4. Ensure `shellcheck` passes locally: `find . -name '*.sh' -not -path './tests/bats/lib/*' -print0 | xargs -0 -r shellcheck`
 5. Ensure bats tests pass locally: `bats tests/bats/`
 6. Open a PR. The CI must be green to merge.
 
