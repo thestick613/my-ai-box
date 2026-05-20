@@ -25,3 +25,31 @@ setup() {
   assert_output --partial "Banana"
   assert_output --partial "invalid"
 }
+
+@test "prompt_yesno: Y default + empty input -> yes" {
+  run bash -c 'source "${REPO_ROOT}/lib/menu.sh"; echo "" | prompt_yesno "Continue?" "Y" && echo "YES" || echo "NO"'
+  assert_success
+  assert_output --partial "YES"
+}
+
+@test "prompt_yesno: N default + empty input -> no" {
+  run bash -c 'source "${REPO_ROOT}/lib/menu.sh"; echo "" | prompt_yesno "Continue?" "N" && echo "YES" || echo "NO"'
+  assert_output --partial "NO"
+}
+
+@test "prompt_yesno: 'y' input -> yes regardless of default" {
+  run bash -c 'source "${REPO_ROOT}/lib/menu.sh"; echo "y" | prompt_yesno "Continue?" "N" && echo "YES" || echo "NO"'
+  assert_output --partial "YES"
+}
+
+@test "prompt_string: returns the typed value" {
+  run bash -c 'source "${REPO_ROOT}/lib/menu.sh"; echo "chat.example.com" | prompt_string "Domain" ""'
+  assert_success
+  assert_output --partial "chat.example.com"
+}
+
+@test "prompt_string: returns the default when input is empty" {
+  run bash -c 'source "${REPO_ROOT}/lib/menu.sh"; echo "" | prompt_string "Domain" "default.example"'
+  assert_success
+  assert_output --partial "default.example"
+}

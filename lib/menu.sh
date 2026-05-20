@@ -33,3 +33,44 @@ prompt_choice() {
     echo "invalid choice: ${choice}" >&2
   done
 }
+
+# prompt_yesno <prompt> <default Y|N>
+# Returns 0 if user answered yes, 1 if no.
+prompt_yesno() {
+  local prompt="$1"
+  local default="${2:-N}"
+  local hint
+  if [[ "${default}" =~ ^[Yy]$ ]]; then hint="[Y/n]"; else hint="[y/N]"; fi
+  local ans
+  printf "%s %s: " "${prompt}" "${hint}" >&2
+  IFS= read -r ans || ans=""
+  [[ -z "${ans}" ]] && ans="${default}"
+  [[ "${ans}" =~ ^[Yy]$ ]]
+}
+
+# prompt_string <prompt> <default>
+# Reads a single line from stdin, echoes it. Returns default if empty.
+prompt_string() {
+  local prompt="$1"
+  local default="${2:-}"
+  local ans
+  if [[ -n "${default}" ]]; then
+    printf "%s [%s]: " "${prompt}" "${default}" >&2
+  else
+    printf "%s: " "${prompt}" >&2
+  fi
+  IFS= read -r ans || ans=""
+  [[ -z "${ans}" ]] && ans="${default}"
+  echo "${ans}"
+}
+
+# prompt_secret <prompt>
+# Reads a single line from stdin WITHOUT echoing characters. Echoes value on stdout.
+prompt_secret() {
+  local prompt="$1"
+  local ans
+  printf "%s (input hidden): " "${prompt}" >&2
+  IFS= read -rs ans || ans=""
+  echo >&2  # newline after hidden input
+  echo "${ans}"
+}
