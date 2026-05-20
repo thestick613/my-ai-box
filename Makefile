@@ -8,4 +8,4 @@ test:
 lint:
 	@find . -type f \( -name '*.sh' -o -name '*.bash' \) \
 		-not -path './tests/bats/lib/*' \
-		-print0 | xargs -0 -r shellcheck -S style
+		-exec shellcheck -S style {} +

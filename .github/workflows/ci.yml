@@ -19,7 +19,7 @@ jobs:
         run: |
           find . -type f \( -name '*.sh' -o -name '*.bash' \) \
             -not -path './tests/bats/lib/*' \
-            -print0 | xargs -0 -r shellcheck -S style
+            -exec shellcheck -S style {} +
 
   bats:
     runs-on: ubuntu-24.04
@@ -35,4 +35,4 @@ jobs:
       - name: Install jq
         run: sudo apt-get install -y jq
       - name: Run bats tests
-        run: find tests/bats -name '*.bats' -print0 | xargs -0 -r bats
+        run: find tests/bats -name '*.bats' -exec bats {} +
