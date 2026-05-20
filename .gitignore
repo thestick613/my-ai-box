@@ -17,4 +17,3 @@ compose.override.yml
 # Test artifacts
 .bats-tmp/
 test-output/
-tests/bats/lib/bats-*/   # bats deps installed locally
