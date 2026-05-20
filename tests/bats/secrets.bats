@@ -43,3 +43,15 @@ setup() {
   assert_failure
   assert_output ""
 }
+
+@test "shred_env: removes the env file" {
+  printf 'X=1\n' > "${ENV_FILE}"
+  chmod 600 "${ENV_FILE}"
+  shred_env "${ENV_FILE}"
+  assert [ ! -f "${ENV_FILE}" ]
+}
+
+@test "shred_env: no-op when file is absent" {
+  run shred_env "${TEST_TMP}/does-not-exist"
+  assert_success
+}

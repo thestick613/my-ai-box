@@ -35,3 +35,15 @@ read_env_var() {
   fi
   echo "${line#"${key}="}"
 }
+
+# shred_env <env_file>
+# Securely removes the env file. Uses `shred -u` if available, else `rm -f`.
+shred_env() {
+  local env_file="$1"
+  [[ -f "${env_file}" ]] || return 0
+  if command -v shred >/dev/null 2>&1; then
+    shred -u "${env_file}"
+  else
+    rm -f "${env_file}"
+  fi
+}
