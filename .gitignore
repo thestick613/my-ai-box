@@ -1,0 +1,20 @@
+# Local runtime artifacts that should never be committed
+.env
+.env.*
+state.json
+data/
+compose.yml
+compose.override.yml
+*.log
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+.claude/
+
+# Test artifacts
+.bats-tmp/
+test-output/
+tests/bats/lib/bats-*/   # bats deps installed locally
