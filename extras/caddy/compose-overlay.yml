@@ -1,0 +1,16 @@
+services:
+  caddy:
+    image: caddy:2.10
+    container_name: my-ai-box-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy/data:/data
+      - ./data/caddy/config:/config
+    networks:
+      - my-ai-box-net
+    depends_on:
+      - open-webui   # NB: this hard-codes open-webui; Plan 2 will generalize.
