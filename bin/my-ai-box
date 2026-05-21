@@ -55,8 +55,111 @@ Commands:
 EOF
 }
 
-# Command stubs — Phases I/J/K/L flesh these out.
-cmd_install()       { echo "install: not yet implemented" >&2; exit 1; }
+# assistant_upstream <assistant-name>
+# Echoes the docker-compose service name and port the reverse proxy points at.
+assistant_upstream() {
+  case "$1" in
+    open-webui)   echo "open-webui:8080" ;;
+    librechat)    echo "librechat:3080" ;;
+    anythingllm)  echo "anythingllm:3001" ;;
+    aider)        echo "aider:0" ;;
+    *) echo "unknown assistant: $1" >&2; return 1 ;;
+  esac
+}
+
+cmd_install() {
+  local runtime_dir="${MY_AI_BOX_RUNTIME_DIR:-/opt/my-ai-box}"
+  local repo_root="${MY_AI_BOX_REPO_ROOT:-${REPO_ROOT}}"
+  local dry_run="${MY_AI_BOX_DRY_RUN:-0}"
+  local noninteractive="${MY_AI_BOX_NONINTERACTIVE:-0}"
+
+  local assistant domain email provider api_key extras
+
+  if [[ "${noninteractive}" == "1" ]]; then
+    local missing=()
+    [[ -z "${MY_AI_BOX_ASSISTANT:-}" ]] && missing+=("MY_AI_BOX_ASSISTANT")
+    [[ -z "${MY_AI_BOX_DOMAIN:-}" ]]    && missing+=("MY_AI_BOX_DOMAIN")
+    [[ -z "${MY_AI_BOX_EMAIL:-}" ]]     && missing+=("MY_AI_BOX_EMAIL")
+    [[ -z "${MY_AI_BOX_PROVIDER:-}" ]]  && missing+=("MY_AI_BOX_PROVIDER")
+    [[ -z "${MY_AI_BOX_API_KEY:-}" ]]   && missing+=("MY_AI_BOX_API_KEY")
+    if [[ ${#missing[@]} -gt 0 ]]; then
+      echo "missing required env vars: ${missing[*]}" >&2
+      return 1
+    fi
+    assistant="${MY_AI_BOX_ASSISTANT}"
+    domain="${MY_AI_BOX_DOMAIN}"
+    email="${MY_AI_BOX_EMAIL}"
+    provider="${MY_AI_BOX_PROVIDER}"
+    api_key="${MY_AI_BOX_API_KEY}"
+    extras="${MY_AI_BOX_EXTRAS:-}"
+  else
+    echo "[my-ai-box] First-time install. Detecting environment…"
+    detect_distro >/dev/null
+    assistant=$(prompt_choice "What do you want to run?" \
+      "open-webui" "librechat" "anythingllm" "aider")
+    domain=$(prompt_string "Domain name for HTTPS (or 'skip' for IP-only)" "skip")
+    email=$(prompt_string "Email for Let's Encrypt" "")
+    provider=$(prompt_choice "Pick your LLM provider" \
+      "openai" "anthropic" "deepseek" "openrouter" "skip")
+    if [[ "${provider}" != "skip" ]]; then
+      api_key=$(prompt_secret "${provider} API key")
+    else
+      api_key=""
+    fi
+    extras=""
+    if [[ "${domain}" != "skip" ]]; then
+      prompt_yesno "Reverse proxy + TLS (Caddy)?" "Y" && extras="caddy"
+    fi
+  fi
+
+  mkdir -p "${runtime_dir}/data"
+
+  local state_file="${runtime_dir}/state.json"
+  local env_file="${runtime_dir}/.env"
+
+  write_state "${state_file}" \
+    assistant="${assistant}" \
+    domain="${domain}" \
+    email="${email}" \
+    provider="${provider}"
+
+  for ex in ${extras}; do add_extra "${state_file}" "${ex}"; done
+
+  if [[ -n "${api_key}" ]]; then
+    case "${provider}" in
+      openai)     write_env_var "${env_file}" "OPENAI_API_KEY" "${api_key}" ;;
+      anthropic)  write_env_var "${env_file}" "ANTHROPIC_API_KEY" "${api_key}" ;;
+      deepseek)   write_env_var "${env_file}" "DEEPSEEK_API_KEY" "${api_key}" ;;
+      openrouter) write_env_var "${env_file}" "OPENROUTER_API_KEY" "${api_key}" ;;
+    esac
+  fi
+  [[ ! -f "${env_file}" ]] && { : > "${env_file}"; chmod 600 "${env_file}"; }
+
+  compose_render "${repo_root}" "${runtime_dir}" "${assistant}" "${extras}"
+
+  if [[ " ${extras} " == *" caddy "* ]]; then
+    mkdir -p "${runtime_dir}/data/caddy"
+    caddy_render \
+      "${runtime_dir}/data/caddy/Caddyfile" \
+      "${domain}" "${email}" \
+      "$(assistant_upstream "${assistant}")"
+  fi
+
+  if [[ "${dry_run}" == "1" ]]; then
+    echo "[my-ai-box] dry-run: skipping docker compose up"
+    return 0
+  fi
+
+  compose_up "${runtime_dir}" "${env_file}"
+
+  if [[ "${domain}" != "skip" ]]; then
+    echo "✓ Done. https://${domain}"
+  else
+    echo "✓ Done. http://$(public_ip 2>/dev/null || echo 'your-vps-ip')"
+  fi
+  echo "  To manage later, run:    my-ai-box"
+  echo "  ℹ Don't have a VPS? See README's 'Recommended VPS providers'."
+}
 cmd_menu()          { echo "menu: not yet implemented" >&2; exit 1; }
 cmd_add_extra()     { echo "add-extra: not yet implemented" >&2; exit 1; }
 cmd_remove_extra()  { echo "remove-extra: not yet implemented" >&2; exit 1; }
