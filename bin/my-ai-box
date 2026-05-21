@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly MY_AI_BOX_VERSION="0.1.0-dev"
+
+# Resolve repo root regardless of how this is invoked. Portable across BSD
+# (macOS) and GNU userlands — `readlink -f` is GNU-only, so we follow symlinks
+# manually using POSIX features only.
+_resolve_script_path() {
+  local source="$1"
+  while [ -L "${source}" ]; do
+    local dir
+    dir=$(cd -P "$(dirname "${source}")" && pwd)
+    source=$(readlink "${source}")
+    [[ "${source}" != /* ]] && source="${dir}/${source}"
+  done
+  cd -P "$(dirname "${source}")" && pwd
+}
+SCRIPT_DIR=$(_resolve_script_path "${BASH_SOURCE[0]}")
+REPO_ROOT=$(dirname "${SCRIPT_DIR}")
+readonly REPO_ROOT
+
+# Source helpers.
+# shellcheck source=../lib/distro.sh
+source "${REPO_ROOT}/lib/distro.sh"
+# shellcheck source=../lib/menu.sh
+source "${REPO_ROOT}/lib/menu.sh"
+# shellcheck source=../lib/secrets.sh
+source "${REPO_ROOT}/lib/secrets.sh"
+# shellcheck source=../lib/state.sh
+source "${REPO_ROOT}/lib/state.sh"
+# shellcheck source=../lib/tls.sh
+source "${REPO_ROOT}/lib/tls.sh"
+# shellcheck source=../lib/compose.sh
+source "${REPO_ROOT}/lib/compose.sh"
+
+usage() {
+  cat <<EOF
+my-ai-box ${MY_AI_BOX_VERSION}
+
+Usage: my-ai-box <command> [options]
+
+Commands:
+  install            Run the install wizard (default when nothing is installed).
+  menu               Open the management menu (default when something is installed).
+  add-extra <name>   Add an extra (caddy, pwa, voice, telegram, searxng, backups).
+  remove-extra <n>   Remove an extra.
+  update             git pull + docker compose up -d.
+  uninstall          Remove containers, data, secrets. Prompts before destruction.
+  status             Show what's installed + container health.
+  logs               Tail container logs.
+  doctor             Print a system report (paste into bug reports).
+  --help, -h         Show this help.
+  --version, -v      Show the version.
+EOF
+}
+
+# Command stubs — Phases I/J/K/L flesh these out.
+cmd_install()       { echo "install: not yet implemented" >&2; exit 1; }
+cmd_menu()          { echo "menu: not yet implemented" >&2; exit 1; }
+cmd_add_extra()     { echo "add-extra: not yet implemented" >&2; exit 1; }
+cmd_remove_extra()  { echo "remove-extra: not yet implemented" >&2; exit 1; }
+cmd_update()        { echo "update: not yet implemented" >&2; exit 1; }
+cmd_uninstall()     { echo "uninstall: not yet implemented" >&2; exit 1; }
+cmd_status()        { echo "status: not yet implemented" >&2; exit 1; }
+cmd_logs()          { echo "logs: not yet implemented" >&2; exit 1; }
+cmd_doctor()        { echo "doctor: not yet implemented" >&2; exit 1; }
+
+cmd="${1:---help}"
+case "${cmd}" in
+  --help|-h|help)     usage; exit 0 ;;
+  --version|-v)       echo "my-ai-box ${MY_AI_BOX_VERSION}"; exit 0 ;;
+  install)            shift; cmd_install "$@" ;;
+  menu)               shift; cmd_menu "$@" ;;
+  add-extra)          shift; cmd_add_extra "$@" ;;
+  remove-extra)       shift; cmd_remove_extra "$@" ;;
+  update)             shift; cmd_update "$@" ;;
+  uninstall)          shift; cmd_uninstall "$@" ;;
+  status)             shift; cmd_status "$@" ;;
+  logs)               shift; cmd_logs "$@" ;;
+  doctor)             shift; cmd_doctor "$@" ;;
+  *)
+    echo "unknown command: ${cmd}" >&2
+    echo "Run 'my-ai-box --help' for usage." >&2
+    exit 2
+    ;;
+esac
