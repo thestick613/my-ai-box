@@ -79,3 +79,18 @@ EOF
   assert_failure
   assert_output --partial "not installed"
 }
+
+@test "my-ai-box uninstall: with --yes shreds .env and removes runtime dir" {
+  setup_tmp
+  local fake_root="${TEST_TMP}/opt/my-ai-box"
+  mkdir -p "${fake_root}/data"
+  echo "X=1" > "${fake_root}/.env"
+  chmod 600 "${fake_root}/.env"
+  jq -n '{schema_version:1}' > "${fake_root}/state.json"
+
+  MY_AI_BOX_DRY_RUN=1 MY_AI_BOX_RUNTIME_DIR="${fake_root}" \
+    run "${REPO_ROOT}/bin/my-ai-box" uninstall --yes
+  assert_success
+  assert [ ! -f "${fake_root}/.env" ]
+  assert [ ! -d "${fake_root}/data" ]
+}

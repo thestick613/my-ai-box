@@ -195,7 +195,26 @@ cmd_menu() {
 cmd_add_extra()     { echo "add-extra: not yet implemented" >&2; exit 1; }
 cmd_remove_extra()  { echo "remove-extra: not yet implemented" >&2; exit 1; }
 cmd_update()        { echo "update: not yet implemented" >&2; exit 1; }
-cmd_uninstall()     { echo "uninstall: not yet implemented" >&2; exit 1; }
+cmd_uninstall() {
+  local runtime_dir="${MY_AI_BOX_RUNTIME_DIR:-/opt/my-ai-box}"
+  local dry_run="${MY_AI_BOX_DRY_RUN:-0}"
+  local assume_yes=0
+  [[ "${1:-}" == "--yes" ]] && assume_yes=1
+
+  if [[ ${assume_yes} -eq 0 ]]; then
+    prompt_yesno "Delete all data + secrets at ${runtime_dir}?" "N" || {
+      echo "aborted."; return 0
+    }
+  fi
+
+  if [[ "${dry_run}" != "1" ]]; then
+    ( cd "${runtime_dir}" 2>/dev/null && docker compose down --remove-orphans ) || true
+  fi
+  shred_env "${runtime_dir}/.env"
+  rm -rf "${runtime_dir}/data"
+  rm -f "${runtime_dir}/compose.yml" "${runtime_dir}/compose.override.yml" "${runtime_dir}/state.json"
+  echo "✓ Uninstalled. The cloned repo at ${runtime_dir} can be 'rm -rf'd manually if you want."
+}
 cmd_status()        { echo "status: not yet implemented" >&2; exit 1; }
 cmd_logs()          { echo "logs: not yet implemented" >&2; exit 1; }
 cmd_doctor()        { echo "doctor: not yet implemented" >&2; exit 1; }
