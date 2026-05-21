@@ -41,3 +41,13 @@ EOF
   assert_failure
   assert_output --partial "no DNS A record"
 }
+
+@test "caddy_render: produces a Caddyfile for the given domain + upstream" {
+  local out="${TEST_TMP}/Caddyfile"
+  caddy_render "${out}" "chat.example.com" "you@example.com" "open-webui:8080"
+  assert [ -f "${out}" ]
+  run cat "${out}"
+  assert_output --partial "chat.example.com"
+  assert_output --partial "you@example.com"
+  assert_output --partial "reverse_proxy open-webui:8080"
+}
