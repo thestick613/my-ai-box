@@ -160,7 +160,38 @@ cmd_install() {
   echo "  To manage later, run:    my-ai-box"
   echo "  ℹ Don't have a VPS? See README's 'Recommended VPS providers'."
 }
-cmd_menu()          { echo "menu: not yet implemented" >&2; exit 1; }
+cmd_menu() {
+  local runtime_dir="${MY_AI_BOX_RUNTIME_DIR:-/opt/my-ai-box}"
+  local state_file="${runtime_dir}/state.json"
+  if [[ ! -f "${state_file}" ]]; then
+    echo "my-ai-box is not installed. Run 'my-ai-box install' first." >&2
+    return 1
+  fi
+  local current_assistant
+  current_assistant=$(read_state "${state_file}" assistant)
+  local current_extras
+  current_extras=$(jq -r '.extras | join(", ")' "${state_file}")
+
+  echo "my-ai-box is installed at ${runtime_dir}."
+  echo "Currently running: ${current_assistant} (extras: ${current_extras:-none})"
+  echo
+  local choice
+  choice=$(prompt_choice "What would you like to do?" \
+    "Add an extra" \
+    "Remove an extra" \
+    "Update everything" \
+    "Show status / logs" \
+    "Uninstall" \
+    "Exit")
+  case "${choice}" in
+    "Add an extra")        cmd_add_extra ;;
+    "Remove an extra")     cmd_remove_extra ;;
+    "Update everything")   cmd_update ;;
+    "Show status / logs")  cmd_status ;;
+    "Uninstall")           cmd_uninstall ;;
+    "Exit")                return 0 ;;
+  esac
+}
 cmd_add_extra()     { echo "add-extra: not yet implemented" >&2; exit 1; }
 cmd_remove_extra()  { echo "remove-extra: not yet implemented" >&2; exit 1; }
 cmd_update()        { echo "update: not yet implemented" >&2; exit 1; }

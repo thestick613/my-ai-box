@@ -59,3 +59,23 @@ EOF
   assert [ -f "${fake_root}/.env" ]
   assert [ -f "${fake_root}/compose.yml" ]
 }
+
+@test "my-ai-box menu: prints the menu when state.json exists" {
+  setup_tmp
+  local fake_root="${TEST_TMP}/opt/my-ai-box"
+  mkdir -p "${fake_root}"
+  jq -n '{schema_version: 1, assistant: "open-webui", extras: ["caddy"]}' \
+    > "${fake_root}/state.json"
+  run bash -c "echo '6' | MY_AI_BOX_RUNTIME_DIR='${fake_root}' '${REPO_ROOT}/bin/my-ai-box' menu"
+  assert_success
+  assert_output --partial "Add an extra"
+  assert_output --partial "Uninstall"
+}
+
+@test "my-ai-box menu: errors when no state.json exists" {
+  setup_tmp
+  MY_AI_BOX_RUNTIME_DIR="${TEST_TMP}/nope" \
+    run "${REPO_ROOT}/bin/my-ai-box" menu
+  assert_failure
+  assert_output --partial "not installed"
+}
