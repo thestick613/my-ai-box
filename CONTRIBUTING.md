@@ -26,3 +26,11 @@ Each assistant lives in `assistants/<name>/` and each extra in `extras/<name>/`.
 ## Reporting issues
 
 Use GitHub Issues with the templates provided.
+
+## End-to-end tests
+
+E2E tests run on local Multipass VMs. Install Multipass:
+- macOS:    `brew install --cask multipass`
+- Linux:    `snap install multipass`
+
+Then run: `make test-e2e`
