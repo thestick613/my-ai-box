@@ -1,0 +1,21 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:0.6.32
+    container_name: my-ai-box-open-webui
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_API_BASE_URL: "${OPENAI_API_BASE_URL:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      WEBUI_AUTH: "true"
+      ENABLE_SIGNUP: "false"
+    volumes:
+      - ./data/open-webui:/app/backend/data
+    networks:
+      - my-ai-box-net
+
+networks:
+  my-ai-box-net:
+    name: my-ai-box-net

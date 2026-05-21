@@ -3,8 +3,8 @@
 .env.*
 state.json
 data/
-compose.yml
-compose.override.yml
+/compose.yml
+/compose.override.yml
 *.log
 
 # Editor / OS noise
