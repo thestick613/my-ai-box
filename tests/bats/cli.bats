@@ -94,3 +94,37 @@ EOF
   assert [ ! -f "${fake_root}/.env" ]
   assert [ ! -d "${fake_root}/data" ]
 }
+
+@test "my-ai-box install: non-interactive rejects MY_AI_BOX_ASSISTANT=librechat" {
+  setup_tmp
+  MY_AI_BOX_DRY_RUN=1 \
+  MY_AI_BOX_RUNTIME_DIR="${TEST_TMP}/opt/my-ai-box" \
+  MY_AI_BOX_REPO_ROOT="${TEST_TMP}/repo" \
+  MY_AI_BOX_NONINTERACTIVE=1 \
+  MY_AI_BOX_ASSISTANT=librechat \
+  MY_AI_BOX_DOMAIN=chat.example.com \
+  MY_AI_BOX_EMAIL=you@example.com \
+  MY_AI_BOX_PROVIDER=anthropic \
+  MY_AI_BOX_API_KEY=sk-test-123 \
+  MY_AI_BOX_EXTRAS= \
+    run "${REPO_ROOT}/bin/my-ai-box" install
+  assert_failure
+  assert_output --partial "v0.1 only supports MY_AI_BOX_ASSISTANT=open-webui"
+}
+
+@test "my-ai-box install: non-interactive rejects MY_AI_BOX_DOMAIN=skip" {
+  setup_tmp
+  MY_AI_BOX_DRY_RUN=1 \
+  MY_AI_BOX_RUNTIME_DIR="${TEST_TMP}/opt/my-ai-box" \
+  MY_AI_BOX_REPO_ROOT="${TEST_TMP}/repo" \
+  MY_AI_BOX_NONINTERACTIVE=1 \
+  MY_AI_BOX_ASSISTANT=open-webui \
+  MY_AI_BOX_DOMAIN=skip \
+  MY_AI_BOX_EMAIL=you@example.com \
+  MY_AI_BOX_PROVIDER=anthropic \
+  MY_AI_BOX_API_KEY=sk-test-123 \
+  MY_AI_BOX_EXTRAS= \
+    run "${REPO_ROOT}/bin/my-ai-box" install
+  assert_failure
+  assert_output --partial "requires a real domain"
+}

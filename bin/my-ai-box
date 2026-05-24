@@ -86,6 +86,14 @@ cmd_install() {
       echo "missing required env vars: ${missing[*]}" >&2
       return 1
     fi
+    if [[ "${MY_AI_BOX_ASSISTANT:-}" != "open-webui" ]]; then
+      echo "[my-ai-box] v0.1 only supports MY_AI_BOX_ASSISTANT=open-webui (got: ${MY_AI_BOX_ASSISTANT:-})" >&2
+      return 1
+    fi
+    if [[ "${MY_AI_BOX_DOMAIN:-}" == "skip" ]]; then
+      echo "[my-ai-box] v0.1 requires a real domain (skip/IP-only not supported)" >&2
+      return 1
+    fi
     assistant="${MY_AI_BOX_ASSISTANT}"
     domain="${MY_AI_BOX_DOMAIN}"
     email="${MY_AI_BOX_EMAIL}"
@@ -95,9 +103,14 @@ cmd_install() {
   else
     echo "[my-ai-box] First-time install. Detecting environment…"
     detect_distro >/dev/null
-    assistant=$(prompt_choice "What do you want to run?" \
-      "open-webui" "librechat" "anythingllm" "aider")
-    domain=$(prompt_string "Domain name for HTTPS (or 'skip' for IP-only)" "skip")
+    # v0.1 ships only Open WebUI. Plan 2 will reintroduce LibreChat, AnythingLLM, Aider.
+    assistant="open-webui"
+    echo "[my-ai-box] Assistant: open-webui (v0.1 ships this one; more in v0.2)"
+    domain=$(prompt_string "Domain name (must point at this VPS — TLS will be issued via Let's Encrypt)" "")
+    if [[ -z "${domain}" || "${domain}" == "skip" ]]; then
+      echo "[my-ai-box] v0.1 requires a domain (no HTTP/IP-only mode in v0.1)." >&2
+      return 1
+    fi
     email=$(prompt_string "Email for Let's Encrypt" "")
     provider=$(prompt_choice "Pick your LLM provider" \
       "openai" "anthropic" "deepseek" "openrouter" "skip")
@@ -106,10 +119,8 @@ cmd_install() {
     else
       api_key=""
     fi
-    extras=""
-    if [[ "${domain}" != "skip" ]]; then
-      prompt_yesno "Reverse proxy + TLS (Caddy)?" "Y" && extras="caddy"
-    fi
+    # Caddy + TLS is mandatory in v0.1 (the only path to expose the assistant).
+    extras="caddy"
   fi
 
   mkdir -p "${runtime_dir}/data"
@@ -152,11 +163,7 @@ cmd_install() {
 
   compose_up "${runtime_dir}" "${env_file}"
 
-  if [[ "${domain}" != "skip" ]]; then
-    echo "✓ Done. https://${domain}"
-  else
-    echo "✓ Done. http://$(public_ip 2>/dev/null || echo 'your-vps-ip')"
-  fi
+  echo "✓ Done. https://${domain}"
   echo "  To manage later, run:    my-ai-box"
   echo "  ℹ Don't have a VPS? See README's 'Recommended VPS providers'."
 }
