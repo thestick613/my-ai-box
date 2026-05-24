@@ -192,3 +192,149 @@ EOF
   assert_success
   assert_output "60"
 }
+
+@test "print_system_info: includes OS, CPU, RAM, Disk lines" {
+  cat > "${TEST_TMP}/os-release" <<EOF
+ID=ubuntu
+VERSION_ID="24.04"
+EOF
+  cat > "${TEST_TMP}/meminfo" <<EOF
+MemTotal:        4194304 kB
+EOF
+  cat > "${TEST_TMP}/cpuinfo" <<EOF
+processor	: 0
+processor	: 1
+EOF
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/df" <<EOF
+#!/usr/bin/env bash
+echo "Filesystem 1G-blocks Used Avail Use% Mounted on"
+echo "/dev/sda1 80 20 60 25% /"
+EOF
+  chmod +x "${TEST_TMP}/bin/df"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+  # Hide nproc to force /proc/cpuinfo fallback path
+  cat > "${TEST_TMP}/bin/nproc" <<EOF
+#!/usr/bin/env bash
+echo "2"
+EOF
+  chmod +x "${TEST_TMP}/bin/nproc"
+
+  run print_system_info "/some/runtime" "${TEST_TMP}/os-release" "${TEST_TMP}/cpuinfo" "${TEST_TMP}/meminfo"
+  assert_success
+  assert_output --partial "OS:"
+  assert_output --partial "ubuntu-24.04"
+  assert_output --partial "CPU:"
+  assert_output --partial "2 vCPU"
+  assert_output --partial "RAM:"
+  assert_output --partial "4.0 GB"
+  assert_output --partial "Disk:"
+  assert_output --partial "60 GB free"
+}
+
+@test "check_minimums: returns 0 + no warnings when above floors" {
+  cat > "${TEST_TMP}/meminfo" <<EOF
+MemTotal:        4194304 kB
+EOF
+  cat > "${TEST_TMP}/cpuinfo" <<EOF
+processor	: 0
+processor	: 1
+EOF
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/df" <<EOF
+#!/usr/bin/env bash
+echo "Filesystem 1G-blocks Used Avail Use% Mounted on"
+echo "/dev/sda1 80 20 60 25% /"
+EOF
+  chmod +x "${TEST_TMP}/bin/df"
+  cat > "${TEST_TMP}/bin/nproc" <<EOF
+#!/usr/bin/env bash
+echo "2"
+EOF
+  chmod +x "${TEST_TMP}/bin/nproc"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+
+  run check_minimums "/some/runtime" "${TEST_TMP}/cpuinfo" "${TEST_TMP}/meminfo"
+  assert_success
+  refute_output --partial "⚠"
+}
+
+@test "check_minimums: warns and returns non-zero when RAM is below 2 GB" {
+  cat > "${TEST_TMP}/meminfo" <<EOF
+MemTotal:        1048576 kB
+EOF
+  cat > "${TEST_TMP}/cpuinfo" <<EOF
+processor	: 0
+processor	: 1
+EOF
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/df" <<EOF
+#!/usr/bin/env bash
+echo "Filesystem 1G-blocks Used Avail Use% Mounted on"
+echo "/dev/sda1 80 20 60 25% /"
+EOF
+  chmod +x "${TEST_TMP}/bin/df"
+  cat > "${TEST_TMP}/bin/nproc" <<EOF
+#!/usr/bin/env bash
+echo "2"
+EOF
+  chmod +x "${TEST_TMP}/bin/nproc"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+
+  run check_minimums "/some/runtime" "${TEST_TMP}/cpuinfo" "${TEST_TMP}/meminfo"
+  assert_failure
+  assert_output --partial "RAM"
+}
+
+@test "check_minimums: warns when CPU < 2" {
+  cat > "${TEST_TMP}/meminfo" <<EOF
+MemTotal:        4194304 kB
+EOF
+  cat > "${TEST_TMP}/cpuinfo" <<EOF
+processor	: 0
+EOF
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/df" <<EOF
+#!/usr/bin/env bash
+echo "Filesystem 1G-blocks Used Avail Use% Mounted on"
+echo "/dev/sda1 80 20 60 25% /"
+EOF
+  chmod +x "${TEST_TMP}/bin/df"
+  cat > "${TEST_TMP}/bin/nproc" <<EOF
+#!/usr/bin/env bash
+echo "1"
+EOF
+  chmod +x "${TEST_TMP}/bin/nproc"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+
+  run check_minimums "/some/runtime" "${TEST_TMP}/cpuinfo" "${TEST_TMP}/meminfo"
+  assert_failure
+  assert_output --partial "CPU"
+}
+
+@test "check_minimums: warns when disk free < 5 GB" {
+  cat > "${TEST_TMP}/meminfo" <<EOF
+MemTotal:        4194304 kB
+EOF
+  cat > "${TEST_TMP}/cpuinfo" <<EOF
+processor	: 0
+processor	: 1
+EOF
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/df" <<EOF
+#!/usr/bin/env bash
+echo "Filesystem 1G-blocks Used Avail Use% Mounted on"
+echo "/dev/sda1 80 78 2 98% /"
+EOF
+  chmod +x "${TEST_TMP}/bin/df"
+  cat > "${TEST_TMP}/bin/nproc" <<EOF
+#!/usr/bin/env bash
+echo "2"
+EOF
+  chmod +x "${TEST_TMP}/bin/nproc"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+
+  run check_minimums "/some/runtime" "${TEST_TMP}/cpuinfo" "${TEST_TMP}/meminfo"
+  assert_failure
+  assert_output --partial "Disk"
+}
