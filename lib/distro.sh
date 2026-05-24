@@ -65,3 +65,36 @@ install_docker() {
   echo "installing Docker via get.docker.com…"
   curl -fsSL https://get.docker.com | sh
 }
+
+# detect_cpu_count [cpuinfo_path]
+# Returns the number of vCPUs as a plain integer, or "1" if undetectable.
+detect_cpu_count() {
+  local cpuinfo="${1:-/proc/cpuinfo}"
+  if command -v nproc >/dev/null 2>&1; then
+    nproc 2>/dev/null && return 0
+  fi
+  if [[ -r "${cpuinfo}" ]]; then
+    grep -c '^processor' "${cpuinfo}"
+    return 0
+  fi
+  echo "1"
+}
+
+# detect_ram_gb [meminfo_path]
+# Echoes total RAM in GB as a single decimal (e.g., "4.0"), or "?" if undetectable.
+detect_ram_gb() {
+  local meminfo="${1:-/proc/meminfo}"
+  if [[ ! -r "${meminfo}" ]]; then
+    echo "?"
+    return 0
+  fi
+  awk '/^MemTotal:/ { printf "%.1f\n", $2 / 1024 / 1024; found=1; exit } END { if (!found) print "?" }' "${meminfo}"
+}
+
+# detect_disk_free_gb <path>
+# Echoes free disk space in GB at the given path (parent of runtime dir, typically).
+detect_disk_free_gb() {
+  local path="${1:-/}"
+  # `df -B 1G` is GNU; tests mock df entirely so this works portably.
+  df -B 1G "${path}" 2>/dev/null | awk 'NR==2 { print $4 }' || echo "?"
+}

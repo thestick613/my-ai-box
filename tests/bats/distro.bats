@@ -135,3 +135,60 @@ EOF
   run cat "${TEST_TMP}/curl.log"
   assert_output --partial "get.docker.com"
 }
+
+@test "detect_cpu_count: returns nproc output when available" {
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/nproc" <<EOF
+#!/usr/bin/env bash
+echo "4"
+EOF
+  chmod +x "${TEST_TMP}/bin/nproc"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+  run detect_cpu_count
+  assert_success
+  assert_output "4"
+}
+
+@test "detect_cpu_count: falls back to /proc/cpuinfo if nproc missing" {
+  # Hide nproc by setting PATH to nothing useful
+  export PATH="${TEST_TMP}/empty:/usr/bin:/bin"
+  mkdir -p "${TEST_TMP}/empty"
+  # Write a fake cpuinfo with 2 processors
+  cat > "${TEST_TMP}/cpuinfo" <<EOF
+processor	: 0
+processor	: 1
+EOF
+  run detect_cpu_count "${TEST_TMP}/cpuinfo"
+  assert_success
+  assert_output "2"
+}
+
+@test "detect_ram_gb: parses /proc/meminfo MemTotal" {
+  cat > "${TEST_TMP}/meminfo" <<EOF
+MemTotal:        4194304 kB
+MemFree:         1048576 kB
+EOF
+  run detect_ram_gb "${TEST_TMP}/meminfo"
+  assert_success
+  assert_output "4.0"
+}
+
+@test "detect_ram_gb: returns '?' when path missing" {
+  run detect_ram_gb "${TEST_TMP}/does-not-exist"
+  assert_output "?"
+}
+
+@test "detect_disk_free_gb: parses df output via mocked df" {
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/df" <<EOF
+#!/usr/bin/env bash
+# Fake df output (header + one data row, sizes already in GB)
+echo "Filesystem 1G-blocks Used Avail Use% Mounted on"
+echo "/dev/sda1 80 20 60 25% /"
+EOF
+  chmod +x "${TEST_TMP}/bin/df"
+  export PATH="${TEST_TMP}/bin:${PATH}"
+  run detect_disk_free_gb "/some/path"
+  assert_success
+  assert_output "60"
+}
