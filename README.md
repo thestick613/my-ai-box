@@ -29,7 +29,9 @@ More assistants and extras coming — see the roadmap.
 
 ## What you'll need
 
-- A fresh Linux VPS (Ubuntu 22.04+, Debian 12). 2 vCPU / 4 GB RAM / 80 GB disk minimum.
+- A fresh Linux VPS (Ubuntu 22.04 / 24.04, or Debian 12).
+  - Minimum: 2 vCPU, 2 GB RAM, 5 GB free disk (installer will warn if you're under).
+  - Recommended: 2 vCPU, 4 GB RAM, 80 GB disk (for sustained use + container data).
 - A domain pointed at your VPS (for HTTPS via Let's Encrypt).
 - An API key from one of: OpenAI, Anthropic, DeepSeek, OpenRouter.
 
