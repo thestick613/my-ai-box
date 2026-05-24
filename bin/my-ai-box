@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly MY_AI_BOX_VERSION="0.1.0-dev"
+readonly MY_AI_BOX_VERSION="0.1.0"
 
 # Resolve repo root regardless of how this is invoked. Portable across BSD
 # (macOS) and GNU userlands — `readlink -f` is GNU-only, so we follow symlinks
