@@ -102,7 +102,13 @@ cmd_install() {
     extras="${MY_AI_BOX_EXTRAS:-}"
   else
     echo "[my-ai-box] First-time install. Detecting environment…"
-    detect_distro >/dev/null
+    print_system_info "${runtime_dir}"
+    if ! check_minimums "${runtime_dir}"; then
+      prompt_yesno "Resource warnings detected above. Continue anyway?" "N" || {
+        echo "[my-ai-box] aborted by user."
+        return 1
+      }
+    fi
     # v0.1 ships only Open WebUI. Plan 2 will reintroduce LibreChat, AnythingLLM, Aider.
     assistant="open-webui"
     echo "[my-ai-box] Assistant: open-webui (v0.1 ships this one; more in v0.2)"
