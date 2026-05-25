@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # install.sh — the bootstrapper.
-# Fetched by: curl -fsSL https://get.my-ai-box.sh | bash
+# Fetched by: curl -fsSL https://raw.githubusercontent.com/thestick613/my-ai-box/v0.1.0/install.sh | bash
+# (A shorter https://get.my-ai-box.sh redirect is on the roadmap.)
 #
 # Pipeline:
 #   1. require_root
@@ -21,7 +22,7 @@ die() { printf '[my-ai-box] error: %s\n' "$*" >&2; exit 1; }
 
 require_root() {
   if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
-    die "must be run as root (try: curl -fsSL https://get.my-ai-box.sh | sudo bash)"
+    die "must be run as root (try: curl -fsSL https://raw.githubusercontent.com/thestick613/my-ai-box/v0.1.0/install.sh | sudo bash)"
   fi
 }
 

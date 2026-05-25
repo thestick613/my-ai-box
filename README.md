@@ -9,9 +9,11 @@
 ## Install
 
 ```bash
-curl -fsSL https://get.my-ai-box.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/thestick613/my-ai-box/v0.1.0/install.sh | sudo bash
 ```
 
+> A shorter `https://get.my-ai-box.sh` redirect is on the roadmap.
+>
 > Worried about `curl | bash`? See [Why curl | bash?](#why-curl--bash) below for the inspect-first alternative.
 
 The installer asks 4–6 questions, brings up containers, requests a Let's Encrypt cert, and prints your URL. Re-run `my-ai-box` later to add/remove things.
@@ -59,7 +61,7 @@ sudo stat -c '%a %u:%g %n' /opt/my-ai-box/.env
 The single-command install is what makes the project usable for non-experts. If you'd rather inspect the script first:
 
 ```bash
-curl -fsSL https://get.my-ai-box.sh -o install.sh
+curl -fsSL https://raw.githubusercontent.com/thestick613/my-ai-box/v0.1.0/install.sh -o install.sh
 less install.sh        # read it
 sudo bash install.sh
 ```
