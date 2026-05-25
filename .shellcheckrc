@@ -1,8 +1,7 @@
-# Enable optional, strict checks not on by default.
-enable=all
-
 # Tests run with bats; bats macros redefine `run`, `load`, `setup`. Allow them.
 external-sources=true
 
-# Style severity (-S style in CI; locally see all).
-severity=style
+# Run with default ruleset. `enable=all` adds informational SC2312/SC2250/SC2015
+# warnings on patterns that aren't bugs (command-substitution exit-code masking,
+# brace-around-vars style, A && B || C idioms). Skip those to keep CI signal
+# focused on real issues. CI also passes `-S style` so we still see style nits.
