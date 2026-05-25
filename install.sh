@@ -9,10 +9,10 @@ set -euo pipefail
 #   2. detect_distro (Ubuntu 22.04 / 24.04 / Debian 12 only)
 #   3. install curl, git, jq, ca-certificates if missing
 #   4. install Docker via get.docker.com if missing
-#   5. clone github.com/<USER>/my-ai-box to /opt/my-ai-box (or use $MY_AI_BOX_DIR)
+#   5. clone github.com/thestick613/my-ai-box to /opt/my-ai-box (or use $MY_AI_BOX_DIR)
 #   6. exec /opt/my-ai-box/bin/my-ai-box install "$@"
 
-readonly MY_AI_BOX_REPO_URL="${MY_AI_BOX_REPO_URL:-https://github.com/<USER>/my-ai-box.git}"
+readonly MY_AI_BOX_REPO_URL="${MY_AI_BOX_REPO_URL:-https://github.com/thestick613/my-ai-box.git}"
 readonly MY_AI_BOX_VERSION="${MY_AI_BOX_VERSION:-main}"
 readonly MY_AI_BOX_DIR="${MY_AI_BOX_DIR:-/opt/my-ai-box}"
 
