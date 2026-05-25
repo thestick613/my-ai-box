@@ -123,7 +123,9 @@ print_system_info() {
   # Public IP best-effort: only printed if helper is loaded AND fetch succeeds.
   if declare -F public_ip >/dev/null 2>&1; then
     local ip
-    ip=$(public_ip 2>/dev/null) && echo "[my-ai-box] Public IP: ${ip}" || true
+    if ip=$(public_ip 2>/dev/null); then
+      echo "[my-ai-box] Public IP: ${ip}"
+    fi
   fi
 }
 
