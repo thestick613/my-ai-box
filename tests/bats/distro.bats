@@ -113,8 +113,6 @@ EOF
 }
 
 @test "install_docker: downloads and runs get.docker.com when docker is missing" {
-  # Force docker missing by overriding PATH to exclude any real docker.
-  export PATH="${TEST_TMP}/bin:/usr/bin:/bin"
   # Mock curl + sh so we record the URL it was asked to fetch.
   mkdir -p "${TEST_TMP}/bin"
   cat > "${TEST_TMP}/bin/curl" <<EOF
@@ -130,7 +128,14 @@ exit 0
 EOF
   chmod +x "${TEST_TMP}/bin/sh"
 
-  run install_docker
+  # Run install_docker in a subshell with PATH restricted to JUST the mock dir.
+  # The function uses only shell builtins (command, echo) and the external
+  # curl + sh, all of which we control. `command -v docker` correctly reports
+  # missing because the mock dir has no docker binary.
+  # macOS hides docker by virtue of Docker Desktop living outside /usr/bin,
+  # but on Linux CI docker lives in /usr/bin — so we need a fully restricted
+  # PATH, not the old "include /usr/bin" trick.
+  run bash -c "PATH='${TEST_TMP}/bin'; source '${REPO_ROOT}/lib/distro.sh'; install_docker"
   assert_success
   run cat "${TEST_TMP}/curl.log"
   assert_output --partial "get.docker.com"
@@ -150,9 +155,17 @@ EOF
 }
 
 @test "detect_cpu_count: falls back to /proc/cpuinfo if nproc missing" {
-  # Hide nproc by setting PATH to nothing useful
-  export PATH="${TEST_TMP}/empty:/usr/bin:/bin"
-  mkdir -p "${TEST_TMP}/empty"
+  # Provide a nproc stub that exits non-zero, simulating "nproc is broken/missing".
+  # `command -v nproc` will find it but the subsequent invocation fails, so the
+  # function falls through to the /proc/cpuinfo branch.
+  # (PATH-emptying alone doesn't work on Linux because real nproc lives in /usr/bin.)
+  mkdir -p "${TEST_TMP}/bin"
+  cat > "${TEST_TMP}/bin/nproc" <<EOF
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "${TEST_TMP}/bin/nproc"
+  export PATH="${TEST_TMP}/bin:${PATH}"
   # Write a fake cpuinfo with 2 processors
   cat > "${TEST_TMP}/cpuinfo" <<EOF
 processor	: 0
