@@ -114,27 +114,28 @@ EOF
 
 @test "install_docker: downloads and runs get.docker.com when docker is missing" {
   # Mock curl + sh so we record the URL it was asked to fetch.
+  # NOTE: shebang must be #!/bin/bash (absolute path) rather than
+  # #!/usr/bin/env bash because the test restricts PATH below, which would
+  # prevent env from finding bash.
   mkdir -p "${TEST_TMP}/bin"
   cat > "${TEST_TMP}/bin/curl" <<EOF
-#!/usr/bin/env bash
+#!/bin/bash
 echo "curl called: \$*" >> "${TEST_TMP}/curl.log"
 echo "echo 'fake install script'"
 EOF
   chmod +x "${TEST_TMP}/bin/curl"
   cat > "${TEST_TMP}/bin/sh" <<EOF
-#!/usr/bin/env bash
+#!/bin/bash
 echo "sh called" >> "${TEST_TMP}/sh.log"
 exit 0
 EOF
   chmod +x "${TEST_TMP}/bin/sh"
 
   # Run install_docker in a subshell with PATH restricted to JUST the mock dir.
-  # The function uses only shell builtins (command, echo) and the external
-  # curl + sh, all of which we control. `command -v docker` correctly reports
-  # missing because the mock dir has no docker binary.
-  # macOS hides docker by virtue of Docker Desktop living outside /usr/bin,
-  # but on Linux CI docker lives in /usr/bin — so we need a fully restricted
-  # PATH, not the old "include /usr/bin" trick.
+  # `command -v docker` correctly reports missing because the mock dir has no
+  # docker binary. macOS hides docker by virtue of Docker Desktop living
+  # outside /usr/bin, but on Linux CI docker lives in /usr/bin — so we need a
+  # fully restricted PATH, not the old "include /usr/bin" trick.
   run bash -c "PATH='${TEST_TMP}/bin'; source '${REPO_ROOT}/lib/distro.sh'; install_docker"
   assert_success
   run cat "${TEST_TMP}/curl.log"
