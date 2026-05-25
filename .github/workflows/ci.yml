@@ -35,4 +35,4 @@ jobs:
       - name: Install jq
         run: sudo apt-get install -y jq
       - name: Run bats tests
-        run: find tests/bats -name '*.bats' -not -path './tests/bats/lib/*' -exec bats {} +
+        run: find tests/bats -path 'tests/bats/lib' -prune -o -name '*.bats' -exec bats {} +
